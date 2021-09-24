@@ -12,6 +12,11 @@ const naturezas = [
 	{ id: 10, nome: "Não identificada" }
 ]
 
+const nomes = [
+	"João", "Maria", "Felipe", "Marcela", "Draco",
+	"Patrick", "Enzo", "Letícia", "Werley", "Yamuri"
+]
+
 const naturezaPorId = (id) => {
 	for (let i = 0; i < naturezas.length; i++) {
 		if (naturezas[i].id == id) {
@@ -22,4 +27,14 @@ const naturezaPorId = (id) => {
 	return naturezas[naturezas.length - 1]
 }
 
-export { naturezaPorId }
+const randomNatureza = () => {
+	const index = Math.floor((Math.random() * naturezas.length) + 1)
+	return naturezas[index]
+}
+
+const randomNome = () => {
+	const index = Math.floor((Math.random() * nomes.length) + 1)
+	return nomes[index]
+}
+
+export { naturezaPorId, randomNatureza, randomNome }

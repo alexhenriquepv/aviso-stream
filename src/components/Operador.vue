@@ -137,7 +137,7 @@
         snapshot.forEach((child) => {
           let data = child.val()
           data.id = child.key
-          data.streamUrl = `${location.protocol}//${location.host}/stream/${data.peerId}?naturezaId=${data.naturezaId}`
+          data.streamUrl = `${location.protocol}//${location.host}/stream/${data.peerId}`
           this.transmissoes.push(data)
         })
 

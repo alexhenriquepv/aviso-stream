@@ -2,20 +2,48 @@
 <template>
 	<Layout>
 		<div class="ui segment basic">
-			<div class="ui grid three column stackable centered">
-				<div class="two column">
+			<div class="ui grid centered stackable">
+
+				<div class="ten wide column">
 					<div id="video-content">
-						<div class="ui message negative">
-							<div class="header">
-								Natureza da Ocorrência
-							</div>
-							<p>{{ natureza.nome }}</p>
-						</div>
 						<video
 							style="width: 100%;" 
 							id="videotag" autoplay></video>
 					</div>
 				</div>
+
+				<div class="six wide column">
+					<table class="ui table inverted celled" v-if="peerData">
+						<tbody>
+							<tr>
+								<td>Natureza</td>
+								<td colspan="3">{{ peerData.naturezaNome }}</td>
+							</tr>
+							<tr>
+								<td>Solicitante</td>
+								<td colspan="3">{{ peerData.nome }}</td>
+							</tr>
+							<tr>
+								<td>Coordenadas</td>
+								<td colspan="3">{{ peerData.coords.lat }}  {{ peerData.coords.lng }}</td>
+							</tr>
+							<tr>
+								<td>Movimento</td>
+								<td>x:  {{ peerData.dm.acceleration.x }}</td>
+								<td>y:  {{ peerData.dm.acceleration.y }}</td>
+								<td>z:  {{ peerData.dm.acceleration.z }}</td>
+							</tr>
+							<tr>
+								<td>Orientação</td>
+								<td>Alpha:  {{ peerData.dm.rotationRate.alpha }}</td>
+								<td>Beta:  {{ peerData.dm.rotationRate.beta }}</td>
+								<td>Gamma:  {{ peerData.dm.rotationRate.gamma }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				
 			</div>
 		</div>
 	</Layout>
@@ -27,14 +55,16 @@ import Layout from '../Layout.vue'
 import Peer from 'peerjs'
 import { naturezaPorId } from '../config/NaturezaEvento.ts'
 
+const lastPeerId = sessionStorage.getItem("peerId") || null
+
 export default {
 	name: 'Stream',
 	components: { Layout },
 	data() {
 		return {
 			conn: null,
-			peer: new Peer(),
-			natureza: {}
+			peer: new Peer(lastPeerId),
+			peerData: null
 		}
 	},
 	methods: {
@@ -46,9 +76,14 @@ export default {
 
 			const call = this.peer.call(this.$route.params.peerId, mediaStream)
 			this.conn = this.peer.connect(this.$route.params.peerId)
-			this.natureza = naturezaPorId(this.$route.query.naturezaId)
 
 			this.conn.on("open", () => console.log(`pair connection opened`))
+
+			this.conn.on('data', data => {
+				this.peerData = data
+				this.peerData.naturezaNome = naturezaPorId(data.naturezaId).nome
+				console.log(this.peerData)
+			})
 
 			this.conn.on("close", () => {
 				console.log(`pair connection closed`)
@@ -75,9 +110,9 @@ export default {
 		}
 	},
 	created() {
-
 		this.peer.on("open", (myId) => {
 			console.log(`Connected to Peer server: ${myId}`)
+			sessionStorage.setItem("peerId", myId)
 			this.makeCall()
 		})
 
