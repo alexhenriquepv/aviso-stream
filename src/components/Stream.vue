@@ -9,7 +9,7 @@
 							<div class="header">
 								Natureza da Ocorrência
 							</div>
-							<p>Incêndio Florestal</p>
+							<p>{{ natureza.nome }}</p>
 						</div>
 						<video
 							style="width: 100%;" 
@@ -25,6 +25,7 @@
 
 import Layout from '../Layout.vue'
 import Peer from 'peerjs'
+import { naturezaPorId } from '../config/NaturezaEvento.ts'
 
 export default {
 	name: 'Stream',
@@ -32,7 +33,8 @@ export default {
 	data() {
 		return {
 			conn: null,
-			peer: new Peer()
+			peer: new Peer(),
+			natureza: {}
 		}
 	},
 	methods: {
@@ -44,6 +46,7 @@ export default {
 
 			const call = this.peer.call(this.$route.params.peerId, mediaStream)
 			this.conn = this.peer.connect(this.$route.params.peerId)
+			this.natureza = naturezaPorId(this.$route.query.naturezaId)
 
 			this.conn.on("open", () => console.log(`pair connection opened`))
 
