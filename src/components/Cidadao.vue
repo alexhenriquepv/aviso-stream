@@ -29,19 +29,21 @@ import Layout from '../Layout.vue'
 import Sensors from '../config/Sensors.ts'
 import Peer from 'peerjs'
 
-import { randomNatureza, randomNome } from '../config/NaturezaEvento.ts'
+import { randomNatureza, randomNome, randomCoord } from '../config/NaturezaEvento.ts'
 
-//import { set, push } from 'firebase/database'
-//import { transmissaoRef } from '../config/Firebase.ts'
+import { set, push, update } from 'firebase/database'
+import { transmissaoRef } from '../config/Firebase.ts'
 
 export default {
 	name: 'Cidadao',
 	components: { Layout },
 	data() {
 		return {
+			newRef: null,
 			peer: new Peer(),
 			stream: null,
 			sharedData: {
+				createdAt: new Date().getTime(),
 				active: true,
 				nome: randomNome(),
 				naturezaId: randomNatureza().id,
@@ -66,10 +68,11 @@ export default {
 			   		this.sharedData.peerId = peerId
 			   		sessionStorage.setItem("peerId", peerId)
 			   		console.log('myPeerId', peerId)
+			   		this.createData()
 			   	})
 			   	this.peer.on('connection', (conn) => {
 			   		conn.on('open', async () => {
-			   			await this.saveData()
+			   			await this.updateData()
 			   			conn.send(this.sharedData)
 			   		})
 			   	})
@@ -90,14 +93,11 @@ export default {
 		async getGeoLocation() {
 			if (navigator.geolocation) {
 
-				const position = await new Promise((resolve, reject) => {
+				/*const position = await new Promise((resolve, reject) => {
 		          navigator.geolocation.getCurrentPosition(resolve, reject)
-		        })
+		        })*/
 
-				this.sharedData.coords = {
-					lat: position.coords.latitude,
-					lng: position.coords.longitude
-				}
+				this.sharedData.coords = randomCoord()
 			}
 		},
 		async getDeviceMotion() {
@@ -110,20 +110,18 @@ export default {
 				console.log(err)
 			}
 		},
-		async saveData() {
+		async updateData() {
 			await this.getGeoLocation()
 			await this.getDeviceMotion()
-			console.log(this.sharedData)
-			/*const newRef = push(transmissaoRef)
-			
-			try {
-				await set(newRef, this.sharedData)
-			}
-			catch(err) {
-				console.log(err)
-			}*/
+			await update(this.newRef, this.sharedData)
+		},
+		createData() {
+			this.newRef = push(transmissaoRef)
+			set(this.newRef, this.sharedData)
 		}
 	},
-	created() {}
+	created() {
+		
+	}
 }
 </script>

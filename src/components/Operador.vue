@@ -15,15 +15,10 @@
     <div class="ui segment basic">
       <div class="ui grid">
 
-        <div class="twelve wide column">
-          <div 
-            class="ui segment" id="mapDiv" 
-            style="padding:  0; margin:  0;height: 450px;width: 100%;"></div>
-        </div>
-
-        <div class="four wide column">
+        <!-- list -->
+        <div class="three wide column">
           <div class="ui items divided">
-            <div class="item" v-for="t in transmissoes" :key="t.id">
+            <div class="item" v-for="t in ocorrencias" :key="t.id">
 
               <div class="ui red label right corner">
                 <i class="video icon"></i>
@@ -35,7 +30,10 @@
                   <span>{{ nomeNatureza(t.naturezaId) }}</span>
                 </div>
                 <div class="description">
-                  <p>{{ t.coords.lat }} {{ t.coords.lng }}</p>
+                  <p>{{ t.createdAt }}</p>
+                  <p v-if="t.coords">{{ t.coords.lat }} {{ t.coords.lng }}</p>
+                  <p v-if="t.dm">{{ t.dm.acceleration}} m/s</p>
+                  <p v-if="t.dm">{{ t.dm.rotationRate}}</p>
                 </div>
                 <div class="extra">
                   <button class="ui button secondary mini" @click="onOpen(t)">
@@ -46,6 +44,13 @@
             </div>
           </div>
         </div>
+        <!-- list -->
+
+        <!-- map -->
+        <div class="thirteen wide column">
+          <div id="mapDiv" style="padding:  0; margin:  0;height: 530px;width: 100%;"></div>
+        </div>
+        <!-- map -->
       </div>
 
     </div>
@@ -55,32 +60,29 @@
 <script>
 
   import Layout from '../Layout.vue'
-  import { transmissaoRef } from '../config/Firebase.ts'
+  import { ocorrenciaRef } from '../config/Firebase.ts'
   import { naturezaPorId } from '../config/NaturezaEvento.ts'
-  import { operadorLayer } from '../config/CustomLayer.ts'
-  import { onValue } from "firebase/database"
 
-  import Map from "@arcgis/core/Map"
-  import MapView from "@arcgis/core/views/MapView"
-  import esriConfig from "@arcgis/core/config"
-  import FeatureLayer from "@arcgis/core/layers/FeatureLayer"
-  import Graphic from "@arcgis/core/Graphic"
+  import { view, addToOcorrenciasLayer, setUpMap } from '../config/MapConfig.ts'
+
+  import { onValue } from "firebase/database"
 
   export default {
     name: 'Operador',
     components: { Layout },
     data() {
       return {
+        mapConfig: null,
         publicPath: process.env.BASE_URL,
-        transmissoes: []
+        ocorrencias: []
       }
     },
     methods: {
       nomeNatureza(id) {
         return naturezaPorId(id).nome
       },
-      onOpen(transmissao) {
-        this.openPopup(transmissao.streamUrl)
+      onOpen(ocorrencia) {
+        this.openPopup(ocorrencia.streamUrl)
       },
       openPopup(link) {
         const w = 400
@@ -90,39 +92,8 @@
         window.open(link,'Ocorrência',`resizable=no,width=${w},height=${h}',top=${top},left=${left}`)
       },
       createMap() {
-        esriConfig.apiKey = "AAPKd1d9bd8c272d40d6bbbae45c0772a1d8H21FpNoaFDvMLPPugdSOXi5LBTlWAYQ0F-GBLSJI0Sgm_ks3JHw6q-01PsXu5xsQ"
 
-        const map = new Map({ basemap: 'arcgis-topographic' })
-
-        const view = new MapView({
-          map: map,
-          center: [-59.988311, -3.056085],
-          zoom: 13,
-          container: 'mapDiv'
-        })
-
-        const graphics = this.transmissoes.map(t => {
-          return new Graphic({
-            geometry: {
-              type: 'point',
-              longitude: t.coords.lng,
-              latitude: t.coords.lat
-            },
-            attributes: {
-              peerId: t.peerId,
-              streamUrl: t.streamUrl,
-              natureza: naturezaPorId(t.naturezaId).nome,
-              nome: t.nome,
-              celular: t.celular,
-              lat: t.coords.lat,
-              lng: t.coords.lng,
-            }
-          })
-        })
-        
-        operadorLayer.source = graphics
-        const layer = new FeatureLayer(operadorLayer)
-        map.add(layer)
+        setUpMap('mapDiv')
 
         view.popup.on("trigger-action", (e) => {
           if (e.action.id == 'transmissao') {
@@ -133,15 +104,18 @@
       }
     },
     mounted() {
-      onValue(transmissaoRef, (snapshot) => {
+      this.createMap()
+      console.log('mounted')
+      onValue(ocorrenciaRef, (snapshot) => {
+        this.ocorrencias = []
         snapshot.forEach((child) => {
           let data = child.val()
           data.id = child.key
           data.streamUrl = `${location.protocol}//${location.host}/stream/${data.peerId}`
-          this.transmissoes.push(data)
+          this.ocorrencias.push(data)
         })
 
-        this.createMap()
+        addToOcorrenciasLayer(this.ocorrencias)
       })
     }
   }

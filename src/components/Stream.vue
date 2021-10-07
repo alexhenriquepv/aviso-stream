@@ -23,17 +23,17 @@
 								<td>Solicitante</td>
 								<td colspan="3">{{ peerData.nome }}</td>
 							</tr>
-							<tr>
+							<tr v-if="peerData.coords">
 								<td>Coordenadas</td>
 								<td colspan="3">{{ peerData.coords.lat }}  {{ peerData.coords.lng }}</td>
 							</tr>
-							<tr>
+							<tr v-if="peerData.dm.acceleration">
 								<td>Movimento</td>
 								<td>x:  {{ peerData.dm.acceleration.x }}</td>
 								<td>y:  {{ peerData.dm.acceleration.y }}</td>
 								<td>z:  {{ peerData.dm.acceleration.z }}</td>
 							</tr>
-							<tr>
+							<tr v-if="peerData.dm.rotationRate">
 								<td>Orientação</td>
 								<td>Alpha:  {{ peerData.dm.rotationRate.alpha }}</td>
 								<td>Beta:  {{ peerData.dm.rotationRate.beta }}</td>
@@ -64,7 +64,10 @@ export default {
 		return {
 			conn: null,
 			peer: new Peer(lastPeerId),
-			peerData: null
+			peerData: {
+				coords: {},
+				dm: { acceleration: {}, rotationRate: {} }
+			}
 		}
 	},
 	methods: {

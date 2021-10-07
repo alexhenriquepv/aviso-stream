@@ -14,8 +14,8 @@ const firebaseConfig = {
 initializeApp(firebaseConfig)
 
 const db = getDatabase()
-const transmissaoRef = ref(db, '/transmissao')
+const ocorrenciaRef = ref(db, '/transmissao')
 
 export {
-    db, transmissaoRef
+    db, ocorrenciaRef
 }
