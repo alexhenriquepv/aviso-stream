@@ -47,17 +47,17 @@ const naturezaPorId = (id) => {
 }
 
 const randomNatureza = () => {
-	const index = Math.floor((Math.random() * naturezas.length) + 1)
+	const index = Math.floor(Math.random() * naturezas.length)
 	return naturezas[index]
 }
 
 const randomNome = () => {
-	const index = Math.floor((Math.random() * nomes.length) + 1)
+	const index = Math.floor(Math.random() * nomes.length)
 	return nomes[index]
 }
 
 const randomCoord = () => {
-	const index = Math.floor((Math.random() * coordenadas.length) + 1)
+	const index = Math.floor(Math.random() * coordenadas.length)
 	return coordenadas[index]
 }
 

@@ -29,10 +29,10 @@ import Layout from '../Layout.vue'
 import Sensors from '../config/Sensors.ts'
 import Peer from 'peerjs'
 
-import { randomNatureza, randomNome, randomCoord } from '../config/NaturezaEvento.ts'
+import { randomNatureza, randomNome, randomCoord } from '../config/Helpers.ts'
 
 import { set, push, update } from 'firebase/database'
-import { transmissaoRef } from '../config/Firebase.ts'
+import { ocorrenciaRef } from '../config/Firebase.ts'
 
 export default {
 	name: 'Cidadao',
@@ -41,6 +41,7 @@ export default {
 		return {
 			newRef: null,
 			peer: new Peer(),
+			dataConn: null,
 			stream: null,
 			sharedData: {
 				createdAt: new Date().getTime(),
@@ -71,6 +72,7 @@ export default {
 			   		this.createData()
 			   	})
 			   	this.peer.on('connection', (conn) => {
+			   		this.dataConn = conn
 			   		conn.on('open', async () => {
 			   			await this.updateData()
 			   			conn.send(this.sharedData)
@@ -88,6 +90,7 @@ export default {
 				this.stream.getTracks().forEach(track => track.stop())
 				this.stream = null
 				this.peer.destroy()
+				this.dataConn.close()
 			}
 		},
 		async getGeoLocation() {
@@ -116,7 +119,7 @@ export default {
 			await update(this.newRef, this.sharedData)
 		},
 		createData() {
-			this.newRef = push(transmissaoRef)
+			this.newRef = push(ocorrenciaRef)
 			set(this.newRef, this.sharedData)
 		}
 	},

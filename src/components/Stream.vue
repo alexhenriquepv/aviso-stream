@@ -53,7 +53,10 @@
 
 import Layout from '../Layout.vue'
 import Peer from 'peerjs'
-import { naturezaPorId } from '../config/NaturezaEvento.ts'
+import { naturezaPorId } from '../config/Helpers.ts'
+
+import { ref as storageRef, uploadBytes } from "firebase/storage"
+import { appStorage } from '../config/Firebase.ts'
 
 const lastPeerId = sessionStorage.getItem("peerId") || null
 
@@ -63,6 +66,8 @@ export default {
 	data() {
 		return {
 			conn: null,
+			recorder: null,
+			chunks: [],
 			peer: new Peer(lastPeerId),
 			peerData: {
 				coords: {},
@@ -91,6 +96,7 @@ export default {
 			this.conn.on("close", () => {
 				console.log(`pair connection closed`)
 				this.endStream()
+				this.recorder.stop()
 			})
 
 			call.on("stream", (remoteStream) => {
@@ -105,11 +111,36 @@ export default {
 			video.srcObject = remoteStream
 			video.autoplay = false
 			video.muted = true
-			video.addEventListener('loadedmetadata', () => video.play())
+			video.addEventListener('loadedmetadata', () => {
+				this.recordVideo(video, remoteStream)
+			})
+		},
+		recordVideo(videoObject, stream) {
+			this.recorder = new MediaRecorder(stream)
+			this.recorder.ondataavailable = (e) => { this.chunks.push(e.data) }
+			this.recorder.onstop = async () => {
+				const blob = new Blob(this.chunks, { type: 'video/mp4' })
+				videoObject.srcObject = null
+				videoObject.src = URL.createObjectURL(blob)
+				videoObject.controls = true
+
+				const filePath = `ocorrencias/${this.$route.params.peerId}`
+				const ref = storageRef(appStorage, filePath)
+				
+				try {
+					const snapshot = await uploadBytes(ref, blob)
+					console.log(snapshot.val())
+				}
+				catch(err) {
+					console.log('Fail on upload', err)
+				}
+			}
+
+			videoObject.play()
+			this.recorder.start()
 		},
 		async endStream() {
 			alert("Encerrada a transmissão")
-			window.close()
 		}
 	},
 	created() {
@@ -119,6 +150,7 @@ export default {
 			this.makeCall()
 		})
 
+		this.peer.on('disconnected', () => console.log('Peer server connection closed'))
 		this.peer.on('close', () => console.log('Peer server connection closed'))
 	}
 }

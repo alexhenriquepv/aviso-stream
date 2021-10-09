@@ -11,11 +11,11 @@ import Expand from "@arcgis/core/widgets/Expand"
 import Locator from "@arcgis/core/tasks/Locator"
 
 import CustomLayers from './CustomLayers.ts'
-import { naturezaPorId } from './NaturezaEvento.ts'
+import { naturezaPorId, randomCoord } from './Helpers.ts'
 
 esriConfig.apiKey = "AAPKd1d9bd8c272d40d6bbbae45c0772a1d8H21FpNoaFDvMLPPugdSOXi5LBTlWAYQ0F-GBLSJI0Sgm_ks3JHw6q-01PsXu5xsQ"
 
-let map, view, ocorrenciasLayer
+let map, view, ocorrenciasLayer, viaturasLayer, delegaciasLayer
 
 function setUpMap(divName) {
 	map = new Map({ basemap: 'arcgis-topographic' })
@@ -28,6 +28,12 @@ function setUpMap(divName) {
 
 	ocorrenciasLayer = new GraphicsLayer(CustomLayers.ocorrencias.config)
 	map.add(ocorrenciasLayer)
+
+	viaturasLayer = new GraphicsLayer(CustomLayers.viaturas.config)
+	map.add(viaturasLayer)
+
+	delegaciasLayer = new GraphicsLayer(CustomLayers.delegacias.config)
+	map.add(delegaciasLayer)
 
 	const transitoLayer = new MapImageLayer(CustomLayers.transito.config)
 	map.add(transitoLayer)
@@ -67,6 +73,45 @@ function setUpMap(divName) {
 	    view.popup.content = "Endereço não encontrado"
 	  }
 	})
+
+	setViaturas()
+	setDelegacias()
+}
+
+function setViaturas() {
+	const graphics = []
+	for (let i = 0; i < 15; i++) {
+		const coord = randomCoord()
+		const item = new Graphic({
+			geometry: {
+			  type: 'point',
+			  longitude: coord.lng,
+			  latitude: coord.lat
+			},
+			symbol: CustomLayers.viaturas.symbol
+		})
+
+		graphics.push(item)
+	}
+	viaturasLayer.addMany(graphics)
+}
+
+function setDelegacias() {
+	const graphics = []
+	for (let i = 0; i < 6; i++) {
+		const coord = randomCoord()
+		const item = new Graphic({
+			geometry: {
+			  type: 'point',
+			  longitude: coord.lng,
+			  latitude: coord.lat
+			},
+			symbol: CustomLayers.delegacias.symbol
+		})
+
+		graphics.push(item)
+	}
+	delegaciasLayer.addMany(graphics)
 }
 
 function addToOcorrenciasLayer(items) {

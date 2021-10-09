@@ -59,6 +59,26 @@ const CustomLayers = {
 			url: "http://traffic.arcgis.com/arcgis/rest/services/World/Traffic/MapServer",
 			sublayers: [{ id: 14, title: 'Tempo Real', visible: true }]
 		}
+	},
+	viaturas: {
+		config: {
+			id: 'viaturas-layer',
+			title: 'Viaturas',
+			graphics: [],
+			fields: [],
+			geometryType: "point"
+		},
+		symbol: { type: "picture-marker", url: './police-car.png', width: "32px", height: "32px" },
+	},
+	delegacias: {
+		config: {
+			id: 'delegacias-layer',
+			title: 'Delegacias',
+			graphics: [],
+			fields: [],
+			geometryType: "point"
+		},
+		symbol: { type: "picture-marker", url: './police-station.png', width: "32px", height: "32px" },
 	}
 }
 
