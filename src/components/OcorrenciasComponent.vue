@@ -16,7 +16,7 @@
 	      </div>
 	      <div class="extra">
 	        <button
-	          @click="onOpen(t.recordUrl)"
+	          @click="openPopup(t.recordUrl)"
 	          v-if="t.recordUrl"
 	          class="ui icon button red mini"
 	          title="Gravação">

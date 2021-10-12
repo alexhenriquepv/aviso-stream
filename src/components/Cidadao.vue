@@ -44,6 +44,7 @@ export default {
 			dataConn: null,
 			stream: null,
 			sharedData: {
+				id: null,
 				createdAt: new Date().getTime(),
 				active: true,
 				nome: randomNome(),
@@ -60,7 +61,7 @@ export default {
 			try {
 				this.stream = await navigator.mediaDevices.getUserMedia({
 					audio: true,
-					video: true,
+					video: true
 				})
 
 				this.peer = new Peer(lastPeerId)
@@ -96,11 +97,20 @@ export default {
 		async getGeoLocation() {
 			if (navigator.geolocation) {
 
-				/*const position = await new Promise((resolve, reject) => {
+				const position = await new Promise((resolve, reject) => {
 		          navigator.geolocation.getCurrentPosition(resolve, reject)
-		        })*/
+		        })
 
-				this.sharedData.coords = randomCoord()
+				let coords = {}
+
+				if (position.latitude && position.longitude) {
+					coords = { lat: position.latitude, lng: position.longitude }
+				}
+				else {
+					coords = randomCoord()
+				}
+
+				this.sharedData.coords = coords
 			}
 		},
 		async getDeviceMotion() {
@@ -120,11 +130,9 @@ export default {
 		},
 		createData() {
 			this.newRef = push(ocorrenciaRef)
+			this.sharedData.id = this.newRef.key
 			set(this.newRef, this.sharedData)
 		}
-	},
-	created() {
-		
 	}
 }
 </script>

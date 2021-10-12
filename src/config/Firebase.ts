@@ -14,7 +14,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db = getDatabase()
-const ocorrenciaRef = ref(db, '/transmissao')
+const ocorrenciaRef = ref(db, 'ocorrencias')
 const appStorage = getStorage(app)
 
 export {

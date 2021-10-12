@@ -17,7 +17,7 @@
 						<tbody>
 							<tr>
 								<td>Natureza</td>
-								<td colspan="3">{{ peerData.naturezaNome }}</td>
+								<td colspan="3">{{ naturezaNome }}</td>
 							</tr>
 							<tr>
 								<td>Solicitante</td>
@@ -55,8 +55,9 @@ import Layout from '../Layout.vue'
 import Peer from 'peerjs'
 import { naturezaPorId } from '../config/Helpers.ts'
 
-import { ref as storageRef, uploadBytes } from "firebase/storage"
-import { appStorage } from '../config/Firebase.ts'
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
+import { update, child } from 'firebase/database'
+import { appStorage, ocorrenciaRef } from '../config/Firebase.ts'
 
 const lastPeerId = sessionStorage.getItem("peerId") || null
 
@@ -67,9 +68,11 @@ export default {
 		return {
 			conn: null,
 			recorder: null,
+			naturezaNome: null,
 			chunks: [],
 			peer: new Peer(lastPeerId),
 			peerData: {
+				id: null,
 				coords: {},
 				dm: { acceleration: {}, rotationRate: {} }
 			}
@@ -89,7 +92,7 @@ export default {
 
 			this.conn.on('data', data => {
 				this.peerData = data
-				this.peerData.naturezaNome = naturezaPorId(data.naturezaId).nome
+				this.naturezaNome = naturezaPorId(data.naturezaId).nome
 				console.log(this.peerData)
 			})
 
@@ -123,21 +126,27 @@ export default {
 				videoObject.srcObject = null
 				videoObject.src = URL.createObjectURL(blob)
 				videoObject.controls = true
-
-				const filePath = `ocorrencias/${this.$route.params.peerId}`
-				const ref = storageRef(appStorage, filePath)
-				
-				try {
-					const snapshot = await uploadBytes(ref, blob)
-					console.log(snapshot.val())
-				}
-				catch(err) {
-					console.log('Fail on upload', err)
-				}
+				this.uploadVideo(blob)
 			}
 
 			videoObject.play()
 			this.recorder.start()
+		},
+		async uploadVideo(blob) {
+			const filePath = `ocorrencias/${this.peerData.id}.mp4`
+			const ref = storageRef(appStorage, filePath)
+			
+			try {
+				const uploadRes = await uploadBytes(ref, blob, { contentType: 'video/mp4' })
+				console.log(uploadRes)
+				const recordUrl = await getDownloadURL(ref)
+
+				const clientRef = child(ocorrenciaRef, this.peerData.id)
+				update(clientRef, { recordUrl })
+			}
+			catch(err) {
+				console.log('Fail on upload', err)
+			}
 		},
 		async endStream() {
 			alert("Encerrada a transmissão")
