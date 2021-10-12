@@ -29,32 +29,55 @@ import Layout from '../Layout.vue'
 import Sensors from '../config/Sensors.ts'
 import Peer from 'peerjs'
 
-import { set, push } from 'firebase/database'
-import { transmissaoRef } from '../config/Firebase.ts'
+import { randomNatureza, randomNome, randomCoord } from '../config/Helpers.ts'
+
+import { set, push, update } from 'firebase/database'
+import { ocorrenciaRef } from '../config/Firebase.ts'
 
 export default {
 	name: 'Cidadao',
 	components: { Layout },
 	data() {
 		return {
+			newRef: null,
 			peer: new Peer(),
+			dataConn: null,
 			stream: null,
-			sharedData: {}
+			sharedData: {
+				id: null,
+				createdAt: new Date().getTime(),
+				active: true,
+				nome: randomNome(),
+				naturezaId: randomNatureza().id,
+				peerId: null,
+				coords: {},
+				dm: {}
+			}
 		}
 	},
 	methods: {
 		async startStream() {
+			const lastPeerId = sessionStorage.getItem("peerId") || null
 			try {
 				this.stream = await navigator.mediaDevices.getUserMedia({
 					audio: true,
-					video: true,
+					video: true
 				})
 
-				this.peer = new Peer()
+				this.peer = new Peer(lastPeerId)
 				
 			   	this.peer.on("open", (peerId) => {
 			   		this.sharedData.peerId = peerId
-			   		this.saveData()
+			   		sessionStorage.setItem("peerId", peerId)
+			   		console.log('myPeerId', peerId)
+			   		this.createData()
+			   	})
+			   	this.peer.on('connection', (conn) => {
+			   		this.dataConn = conn
+			   		conn.on('open', async () => {
+			   			await this.updateData()
+			   			conn.send(this.sharedData)
+			   		})
 			   	})
 				this.peer.on('disconnected', () => {})
 				this.peer.on("call", (call) => call.answer(this.stream))
@@ -68,43 +91,48 @@ export default {
 				this.stream.getTracks().forEach(track => track.stop())
 				this.stream = null
 				this.peer.destroy()
+				this.dataConn.close()
 			}
 		},
 		async getGeoLocation() {
 			if (navigator.geolocation) {
+
 				const position = await new Promise((resolve, reject) => {
 		          navigator.geolocation.getCurrentPosition(resolve, reject)
 		        })
-				const coords = {
-					lat: position.coords.latitude,
-					lng: position.coords.longitude
+
+				let coords = {}
+
+				if (position.latitude && position.longitude) {
+					coords = { lat: position.latitude, lng: position.longitude }
 				}
+				else {
+					coords = randomCoord()
+				}
+
 				this.sharedData.coords = coords
 			}
 		},
-		async saveData() {
-			await this.getGeoLocation()
-			this.sharedData.active = true
-			
-			const newRef = push(transmissaoRef)
-			
+		async getDeviceMotion() {
 			try {
-				await set(newRef, this.sharedData)
+				const sensors = new Sensors()
+				const dm = await sensors.deviceMotion()
+				this.sharedData.dm = dm
 			}
 			catch(err) {
 				console.log(err)
 			}
+		},
+		async updateData() {
+			await this.getGeoLocation()
+			await this.getDeviceMotion()
+			await update(this.newRef, this.sharedData)
+		},
+		createData() {
+			this.newRef = push(ocorrenciaRef)
+			this.sharedData.id = this.newRef.key
+			set(this.newRef, this.sharedData)
 		}
-	},
-	created() {
-		/*const nome = prompt('Informe o seu nome')
-		this.sharedData.nome = nome
-
-		const natureza = prompt('Natureza do evento')
-		this.sharedData.natureza = natureza*/
-
-		const sensors = new Sensors()
-		sensors.deviceMotion(console.log)
 	}
 }
 </script>

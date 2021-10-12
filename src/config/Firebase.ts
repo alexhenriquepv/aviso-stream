@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app"
 import { getDatabase, ref } from "firebase/database"
+import { getStorage } from "firebase/storage"
 
 const firebaseConfig = {
   apiKey: "AIzaSyDjhs93LWblwqZV7dtvJ1njIl8vg0wNs80",
@@ -11,11 +12,11 @@ const firebaseConfig = {
   appId: "1:506213256598:web:a6a3f7ac896237b78361b7"
 }
 
-initializeApp(firebaseConfig)
-
+const app = initializeApp(firebaseConfig)
 const db = getDatabase()
-const transmissaoRef = ref(db, '/transmissao')
+const ocorrenciaRef = ref(db, 'ocorrencias')
+const appStorage = getStorage(app)
 
 export {
-    db, transmissaoRef
+    db, appStorage, ocorrenciaRef
 }

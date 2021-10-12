@@ -4,38 +4,29 @@
 
 <template>
   <Layout>
-    <div class="ui segment basic">
-      <h4 class="ui header">Operador</h4>
-      <div class="ui divider"></div>
+    <div class="ui inverted segment center aligned" style="padding: .2rem 1rem;">
+      <div class="ui inverted secondary menu">
+        <a href="#" class="active item">
+          Operador
+        </a>
+      </div>
+    </div>
 
+    <div class="ui segment basic">
       <div class="ui grid">
 
-        <div class="twelve wide column">
-          <div 
-            class="ui segment" id="mapDiv" 
-            style="padding:  0; margin:  0;height: 450px;width: 100%;"></div>
+        <!-- list -->
+        <div class="three wide column" style="padding-top: 0; padding-bottom: 0;">
+          <OcorrenciasComponent :ocorrencias="ocorrencias"></OcorrenciasComponent>
         </div>
+        <!-- list -->
 
-        <div class="four wide column">
-          <div class="ui items divided">
-            <div class="item" v-for="t in transmissoes" :key="t.id">
-              <div class="content">
-                <div class="header">{{ t.nome }}</div>
-                <div class="meta">
-                  <span>{{ t.natureza || 'Evento não informado' }}</span>
-                </div>
-                <div class="description">
-                  <p>{{ t.coords.lat }};{{ t.coords.lng }}</p>
-                </div>
-                <div class="extra">
-                  <button class="ui button" @click="onOpen(t)">
-                    Ver vídeo
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- map -->
+        <div class="thirteen wide column" style="padding-top: 0; padding-bottom: 0; padding-left: 0;">
+          <div id="mapDiv" style="padding:  0; margin:  0;height: 530px;width: 100%;"></div>
         </div>
+        <!-- map -->
+
       </div>
 
     </div>
@@ -45,104 +36,49 @@
 <script>
 
   import Layout from '../Layout.vue'
-  import { transmissaoRef } from '../config/Firebase.ts'
+  import OcorrenciasComponent from './OcorrenciasComponent.vue'
+  import { ocorrenciaRef } from '../config/Firebase.ts'
+  import { view, addToOcorrenciasLayer, setUpMap } from '../config/MapConfig.ts'
   import { onValue } from "firebase/database"
-
-  import Map from "@arcgis/core/Map"
-  import MapView from "@arcgis/core/views/MapView"
-  import esriConfig from "@arcgis/core/config"
-  import FeatureLayer from "@arcgis/core/layers/FeatureLayer"
-  import Graphic from "@arcgis/core/Graphic"
-
+  
   export default {
     name: 'Operador',
-    components: { Layout },
+    components: { Layout, OcorrenciasComponent },
     data() {
       return {
-        publicPath: process.env.BASE_URL,
-        transmissoes: []
+        mapConfig: null,
+        ocorrencias: []
       }
     },
     methods: {
-      onOpen(transmissao) {
-        const w = 400
-        const h = 450
-        const left = (screen.width - w) / 2
-        const top = (screen.height - h) / 4
-        window.open(
-          `/stream/${transmissao.peerId}`, 
-          'Ocorrência', 
-          `resizable=no,width=${w},height=${h}',top=${top},left=${left}`
-        )
-      },
       createMap() {
-        esriConfig.apiKey = "AAPKd1d9bd8c272d40d6bbbae45c0772a1d8H21FpNoaFDvMLPPugdSOXi5LBTlWAYQ0F-GBLSJI0Sgm_ks3JHw6q-01PsXu5xsQ"
-
-        const map = new Map({
-          basemap: 'arcgis-topographic'
+        setUpMap('mapDiv')
+        view.popup.on("trigger-action", (e) => {
+          if (e.action.id == 'transmissao') {
+            const atts = view.popup.viewModel.selectedFeature.attributes
+            this.openPopup(atts.streamUrl)
+          }
         })
-
-        new MapView({
-          map: map,
-          center: [-59.988311, -3.056085],
-          zoom: 13,
-          container: 'mapDiv'
-        })
-
-        const graphics = this.transmissoes.map(t => {
-          return new Graphic({
-            geometry: {
-              type: 'point',
-              longitude: t.coords.lng,
-              latitude: t.coords.lat
-            },
-            attributes: {
-              peerId: t.peerId,
-              natureza: t.natureza,
-              nome: t.nome,
-            }
-          })
-        })
-        
-        const layer = new FeatureLayer({
-          source: graphics,
-          fields: [
-            { name: 'id', alias: 'id', type: 'oid' },
-            { name: 'peerId', alias: 'peerId', type: 'string' },
-            { name: 'lat', alias: 'lat', type: 'string' },
-            { name: 'lng', alias: 'lng', type: 'string' },
-            { name: 'nome', alias: 'Nome', type: 'string' },
-            { name: 'natureza', alias: 'Natureza', type: 'string' },
-          ],
-          renderer: {
-            type: 'simple',
-            symbol: {
-              type: "picture-marker",
-              url: './siren.png',
-              width: "32px",
-              height: "32px"
-            },
-          },
-          popupTemplate: {
-            title: "{nome}",
-            content: "<a href='/stream/{peerId}'>Clique para ver a transmissão</a>"
-          },
-          objectIdField: 'id',
-          geometryType: "point"
-        })
-
-        map.add(layer)
       }
     },
     mounted() {
-      onValue(transmissaoRef, (snapshot) => {
+      this.createMap()
+
+      onValue(ocorrenciaRef, (snapshot) => {
+        this.ocorrencias = []
         snapshot.forEach((child) => {
+
           let data = child.val()
-          data.id = child.key
-          this.transmissoes.push(data)
+          
+          if (data.active && !data.trote) {
+            data.id = child.key
+            data.streamUrl = `${location.protocol}//${location.host}/stream/${data.peerId}`
+            this.ocorrencias.push(data)
+          }
         })
 
-        this.createMap()
+        this.ocorrencias.reverse()
+        addToOcorrenciasLayer(this.ocorrencias)
       })
     }
   }
