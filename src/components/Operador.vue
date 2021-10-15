@@ -6,6 +6,7 @@
   <Layout>
     <div class="ui inverted segment center aligned" style="padding: .2rem 1rem;">
       <div class="ui inverted secondary menu">
+        <router-link to="/" class="item">Início</router-link>
         <a href="#" class="active item">
           Operador
         </a>
