@@ -76,6 +76,7 @@ export default {
 			   		this.dataConn = conn
 			   		conn.on('open', async () => {
 			   			await this.updateData()
+						console.log("update", this.sharedData)
 			   			conn.send(this.sharedData)
 			   		})
 			   	})
@@ -91,7 +92,7 @@ export default {
 				this.stream.getTracks().forEach(track => track.stop())
 				this.stream = null
 				this.peer.destroy()
-				this.dataConn.close()
+				if (this.dataConn) this.dataConn.close()
 			}
 		},
 		async getGeoLocation() {

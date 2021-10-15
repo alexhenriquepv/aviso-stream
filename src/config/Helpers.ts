@@ -14,7 +14,8 @@ const naturezas = [
 
 const nomes = [
 	"João", "Maria", "Felipe", "Marcela", "Draco",
-	"Patrick", "Enzo", "Letícia", "Werley", "Yamuri"
+	"Patrick", "Enzo", "Letícia", "Werley", "Yamuri",
+	"Hiago", "Pedro Paulo", "Juan Felix", "Júlia Amorim"
 ]
 
 const coordenadas = [
@@ -33,7 +34,13 @@ const coordenadas = [
 	{ lat: -3.111059, lng: -60.034258 },
 	{ lat: -3.109664, lng: -59.978987 },
 	{ lat: -3.115690, lng: -59.962886 },
-	{ lat: -3.085236, lng: -59.892866 }
+	{ lat: -3.085236, lng: -59.892866 },
+	{ lat: -3.058759, lng: -59.983112 },
+	{ lat: -3.069601, lng: -59.968735 },
+	{ lat: -3.088317, lng: -59.968137 },
+	{ lat: -3.092780, lng: -59.986811 },
+	{ lat: -3.085236, lng: -59.945160 },
+	{ lat: -3.063091, lng: -59.939044 },
 ]
 
 const naturezaPorId = (id) => {

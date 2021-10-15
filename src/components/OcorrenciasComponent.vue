@@ -13,8 +13,6 @@
 		      <div class="header">{{ t.nome }}</div>
 		      <div class="meta">
 		        <p>{{ dataHora(t.createdAt) }}</p>
-		        <p v-if="t.dm">{{ t.dm.acceleration}} m/s</p>
-		        <p v-if="t.dm">{{ t.dm.rotationRate}}</p>
 		      </div>
 		      <div class="description">
 		        <select>
